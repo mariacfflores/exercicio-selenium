@@ -4,9 +4,11 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
@@ -16,10 +18,12 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 
+
 public class RegistrarUsuarioTest {
 
     protected WebDriver driver;
     protected WebDriverWait wait;
+
 
     @BeforeEach
     public void abrirNavegador() {
@@ -30,32 +34,69 @@ public class RegistrarUsuarioTest {
 
         wait = new WebDriverWait(
                 driver,
-                Duration.ofSeconds(15)
+                Duration.ofSeconds(20)
         );
 
-        driver.get("https://automationexercise.com/");
+        driver.get(
+                "https://automationexercise.com/"
+        );
     }
 
 
-    @Test
-    public void registrarUsuario() {
+    /*
+     * 5 entradas diferentes para cadastro.
+     *
+     * São utilizados nomes de diferentes tamanhos
+     * e valores distintos para o dia de nascimento.
+     *
+     * Os dias 1 e 31 representam os valores
+     * de limite inferior e superior do campo.
+     */
+    @ParameterizedTest(
+            name = "Cadastro {index}: nome={0}, dia={1}"
+    )
+    @CsvSource({
+            "'M', '1'",
+            "'Ana', '2'",
+            "'Maria Teste', '15'",
+            "'Maria Clara Flores', '30'",
+            "'Nome Muito Longo Para Teste Selenium', '31'"
+    })
+    public void registrarUsuario(
+            String nome,
+            String diaNascimento) {
 
-        String nome = "Maria Teste";
 
-        // Gera um email diferente em cada execução
+        /*
+         * Gera um e-mail diferente para cada execução.
+         */
         String email =
-                "mariateste"
-                + System.currentTimeMillis()
+                "teste"
+                + System.nanoTime()
                 + "@email.com";
 
 
-        // 1 - Clica em Signup / Login
-        driver.findElement(
-                By.cssSelector("a[href='/login']")
-        ).click();
+        // 1 - Verifica página inicial
+        assertTrue(
+                driver.getTitle() != null
+                && !driver.getTitle().isEmpty()
+        );
 
 
-        // 2 - Verifica New User Signup!
+        // 2 - Clica em Signup / Login
+        WebElement botaoSignup =
+                wait.until(
+                        ExpectedConditions.elementToBeClickable(
+                                By.cssSelector(
+                                        "a[href='/login']"
+                                )
+                        )
+                );
+
+        botaoSignup.click();
+
+
+        // 3 - Verifica New User Signup!
         WebElement tituloCadastro =
                 wait.until(
                         ExpectedConditions.visibilityOfElementLocated(
@@ -68,25 +109,31 @@ public class RegistrarUsuarioTest {
         assertTrue(tituloCadastro.isDisplayed());
 
 
-        // 3 - Preenche nome
+        // 4 - Nome
         driver.findElement(
-                By.cssSelector("[data-qa='signup-name']")
+                By.cssSelector(
+                        "[data-qa='signup-name']"
+                )
         ).sendKeys(nome);
 
 
-        // 4 - Preenche email
+        // 5 - E-mail
         driver.findElement(
-                By.cssSelector("[data-qa='signup-email']")
+                By.cssSelector(
+                        "[data-qa='signup-email']"
+                )
         ).sendKeys(email);
 
 
-        // 5 - Clica em Signup
+        // 6 - Signup
         driver.findElement(
-                By.cssSelector("[data-qa='signup-button']")
+                By.cssSelector(
+                        "[data-qa='signup-button']"
+                )
         ).click();
 
 
-        // 6 - Verifica ENTER ACCOUNT INFORMATION
+        // 7 - Verifica ENTER ACCOUNT INFORMATION
         WebElement tituloInformacoes =
                 wait.until(
                         ExpectedConditions.visibilityOfElementLocated(
@@ -99,125 +146,178 @@ public class RegistrarUsuarioTest {
         assertTrue(tituloInformacoes.isDisplayed());
 
 
-        // 7 - Seleciona Mrs.
-        driver.findElement(
-                By.id("id_gender2")
-        ).click();
+        // 8 - Seleciona Mrs.
+        clicarComJavaScript(
+                driver.findElement(
+                        By.id("id_gender2")
+                )
+        );
 
 
-        // 8 - Preenche senha
+        // 9 - Senha
         driver.findElement(
                 By.id("password")
         ).sendKeys("Senha123");
 
 
-        // 9 - Data de nascimento
+        // 10 - Dia de nascimento
         Select dia =
                 new Select(
-                        driver.findElement(By.id("days"))
+                        driver.findElement(
+                                By.id("days")
+                        )
                 );
 
-        dia.selectByValue("1");
+        dia.selectByValue(
+                diaNascimento
+        );
 
 
+        // 11 - Mês
         Select mes =
                 new Select(
-                        driver.findElement(By.id("months"))
+                        driver.findElement(
+                                By.id("months")
+                        )
                 );
 
         mes.selectByValue("1");
 
 
+        // 12 - Ano
         Select ano =
                 new Select(
-                        driver.findElement(By.id("years"))
+                        driver.findElement(
+                                By.id("years")
+                        )
                 );
 
         ano.selectByValue("2000");
 
 
-        // 10 - Newsletter
-        driver.findElement(
-                By.id("newsletter")
-        ).click();
+        // 13 - Newsletter
+        WebElement newsletter =
+                wait.until(
+                        ExpectedConditions.presenceOfElementLocated(
+                                By.id("newsletter")
+                        )
+                );
+
+        clicarComJavaScript(
+                newsletter
+        );
 
 
-        // 11 - Ofertas de parceiros
-        driver.findElement(
-                By.id("optin")
-        ).click();
+        // 14 - Ofertas de parceiros
+        WebElement ofertas =
+                wait.until(
+                        ExpectedConditions.presenceOfElementLocated(
+                                By.id("optin")
+                        )
+                );
+
+        clicarComJavaScript(
+                ofertas
+        );
 
 
-        // 12 - Primeiro nome
+        // 15 - Primeiro nome
         driver.findElement(
                 By.id("first_name")
-        ).sendKeys("Maria");
+        ).sendKeys(nome);
 
 
-        // 13 - Sobrenome
+        // 16 - Sobrenome
         driver.findElement(
                 By.id("last_name")
         ).sendKeys("Teste");
 
 
-        // 14 - Empresa
+        // 17 - Empresa
         driver.findElement(
                 By.id("company")
-        ).sendKeys("Empresa Teste");
+        ).sendKeys(
+                "Empresa Teste"
+        );
 
 
-        // 15 - Endereço
+        // 18 - Endereço
         driver.findElement(
                 By.id("address1")
-        ).sendKeys("Rua Teste, 123");
+        ).sendKeys(
+                "Rua Teste, 123"
+        );
 
 
-        // 16 - Segundo endereço
+        // 19 - Endereço 2
         driver.findElement(
                 By.id("address2")
-        ).sendKeys("Apartamento 101");
+        ).sendKeys(
+                "Apartamento 101"
+        );
 
 
-        // 17 - País
+        // 20 - País
         Select pais =
                 new Select(
-                        driver.findElement(By.id("country"))
+                        driver.findElement(
+                                By.id("country")
+                        )
                 );
 
-        pais.selectByVisibleText("Canada");
+        pais.selectByVisibleText(
+                "Canada"
+        );
 
 
-        // 18 - Estado
+        // 21 - Estado
         driver.findElement(
                 By.id("state")
-        ).sendKeys("Ontario");
+        ).sendKeys(
+                "Ontario"
+        );
 
 
-        // 19 - Cidade
+        // 22 - Cidade
         driver.findElement(
                 By.id("city")
-        ).sendKeys("Toronto");
+        ).sendKeys(
+                "Toronto"
+        );
 
 
-        // 20 - CEP
+        // 23 - CEP
         driver.findElement(
                 By.id("zipcode")
-        ).sendKeys("12345");
+        ).sendKeys(
+                "12345"
+        );
 
 
-        // 21 - Celular
+        // 24 - Celular
         driver.findElement(
                 By.id("mobile_number")
-        ).sendKeys("21999999999");
+        ).sendKeys(
+                "21999999999"
+        );
 
 
-        // 22 - Clica em Create Account
-        driver.findElement(
-                By.cssSelector("[data-qa='create-account']")
-        ).click();
+        // 25 - Create Account
+        WebElement criarConta =
+                wait.until(
+                        ExpectedConditions.presenceOfElementLocated(
+                                By.cssSelector(
+                                        "[data-qa='create-account']"
+                                )
+                        )
+                );
+
+        clicarComJavaScript(
+                criarConta
+        );
 
 
-        // 23 - Verifica ACCOUNT CREATED!
+        // 26 - Verifica ACCOUNT CREATED!
         WebElement contaCriada =
                 wait.until(
                         ExpectedConditions.visibilityOfElementLocated(
@@ -227,42 +327,30 @@ public class RegistrarUsuarioTest {
                         )
                 );
 
-        assertTrue(contaCriada.isDisplayed());
+        assertTrue(
+                contaCriada.isDisplayed()
+        );
 
 
-        // 24 - Clica em Continue
-        driver.findElement(
-                By.cssSelector("[data-qa='continue-button']")
-        ).click();
+        // 27 - Continue
+        WebElement botaoContinuar =
+                wait.until(
+                        ExpectedConditions.presenceOfElementLocated(
+                                By.cssSelector(
+                                        "[data-qa='continue-button']"
+                                )
+                        )
+                );
+
+        clicarComJavaScript(
+                botaoContinuar
+        );
 
 
-        // Dá um pequeno tempo para verificar
-        // se o anúncio do Google apareceu
-        try {
-
-            Thread.sleep(2000);
-
-        } catch (InterruptedException e) {
-
-            e.printStackTrace();
-        }
+        tratarGoogleVignette();
 
 
-        // Se o anúncio Google Vignette aparecer,
-        // acessa a página inicial diretamente
-        if (driver.getCurrentUrl().contains("#google_vignette")) {
-
-            System.out.println(
-                    "Anúncio do Google detectado."
-            );
-
-            driver.get(
-                    "https://automationexercise.com/"
-            );
-        }
-
-
-        // 25 - Verifica Logged in as
+        // 28 - Verifica Logged in as
         WebElement usuarioLogado =
                 wait.until(
                         ExpectedConditions.visibilityOfElementLocated(
@@ -272,18 +360,32 @@ public class RegistrarUsuarioTest {
                         )
                 );
 
-        assertTrue(usuarioLogado.isDisplayed());
+        assertTrue(
+                usuarioLogado.isDisplayed()
+        );
 
 
-        // 26 - Clica em Delete Account
-        driver.findElement(
-                By.cssSelector(
-                        "a[href='/delete_account']"
-                )
-        ).click();
+        // 29 - Delete Account
+        tratarGoogleVignette();
+
+        WebElement deletarConta =
+                wait.until(
+                        ExpectedConditions.presenceOfElementLocated(
+                                By.cssSelector(
+                                        "a[href='/delete_account']"
+                                )
+                        )
+                );
+
+        clicarComJavaScript(
+                deletarConta
+        );
 
 
-        // 27 - Verifica ACCOUNT DELETED!
+        tratarGoogleVignette();
+
+
+        // 30 - Verifica ACCOUNT DELETED!
         WebElement contaExcluida =
                 wait.until(
                         ExpectedConditions.visibilityOfElementLocated(
@@ -293,22 +395,92 @@ public class RegistrarUsuarioTest {
                         )
                 );
 
-        assertTrue(contaExcluida.isDisplayed());
+        assertTrue(
+                contaExcluida.isDisplayed()
+        );
 
 
-        // 28 - Clica em Continue
-        driver.findElement(
-                By.cssSelector(
-                        "[data-qa='continue-button']"
+        // 31 - Continue
+        WebElement continuarFinal =
+                wait.until(
+                        ExpectedConditions.presenceOfElementLocated(
+                                By.cssSelector(
+                                        "[data-qa='continue-button']"
+                                )
+                        )
+                );
+
+        clicarComJavaScript(
+                continuarFinal
+        );
+    }
+
+
+    /*
+     * Realiza o clique via JavaScript.
+     *
+     * Isso ajuda quando anúncios ou iframes
+     * ficam visualmente por cima dos elementos.
+     */
+    private void clicarComJavaScript(
+            WebElement elemento) {
+
+        JavascriptExecutor js =
+                (JavascriptExecutor) driver;
+
+        js.executeScript(
+                "arguments[0].scrollIntoView({block: 'center'});",
+                elemento
+        );
+
+        js.executeScript(
+                "arguments[0].click();",
+                elemento
+        );
+    }
+
+
+    /*
+     * Alguns anúncios do Google adicionam
+     * #google_vignette à URL.
+     *
+     * Quando isso acontecer, acessamos novamente
+     * a mesma URL sem o fragmento do anúncio.
+     */
+    private void tratarGoogleVignette() {
+
+        String urlAtual =
+                driver.getCurrentUrl();
+
+        if (
+                urlAtual.contains(
+                        "#google_vignette"
                 )
-        ).click();
+        ) {
 
+            System.out.println(
+                    "Google Vignette detectado."
+            );
+
+            String urlSemAnuncio =
+                    urlAtual.replace(
+                            "#google_vignette",
+                            ""
+                    );
+
+            driver.get(
+                    urlSemAnuncio
+            );
+        }
     }
 
 
     @AfterEach
     public void fecharNavegador() {
 
-        driver.quit();
+        if (driver != null) {
+
+            driver.quit();
+        }
     }
 }
